@@ -1,32 +1,31 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
+import React, { useState, useEffect } from 'react'; // Importation de useState
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { Navbar, Nav, Container, Button } from 'react-bootstrap'; // Button retiré car non utilisé
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   return (
     <Router>
-      <nav>
-        <ul>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/chatbot">Chatbot</Link>
-          </li>
-          <li>
-            <Link to="/article-generator">Générateur d'Articles</Link>
-          </li>
-          <li>
-            <Link to="/articles">Articles</Link>
-          </li>
-        </ul>
-      </nav>
-
-      <Routes>
-        <Route path="/chatbot" element={<Chatbot />} />
-        <Route path="/article-generator" element={<ArticleGenerator />} />
-        <Route path="/articles" element={<Articles />} />
-        <Route path="/" element={<Home />} />
-      </Routes>
+      <Navbar bg="dark" variant="dark" expand="lg" sticky="top">
+        <Container>
+          <Navbar.Brand href="/">Mon App</Navbar.Brand>
+          <Nav className="me-auto">
+            {/* Utilisation de Link de react-router-dom avec la prop 'as' pour une intégration fluide avec React-Bootstrap */}
+            <Link to="/" className="nav-link">Accueil</Link>
+            <Link to="/chatbot" className="nav-link">Chatbot</Link>
+            <Link to="/article-generator" className="nav-link">Générateur d'Articles</Link>
+            <Link to="/articles" className="nav-link">Articles</Link>
+          </Nav>
+        </Container>
+      </Navbar>
+      <Container style={{ marginTop: '20px' }}>
+        <Routes>
+          <Route path="/chatbot" element={<Chatbot />} />
+          <Route path="/article-generator" element={<ArticleGenerator />} />
+          <Route path="/articles" element={<Articles />} />
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </Container>
     </Router>
   );
 }
@@ -41,18 +40,42 @@ function Chatbot() {
 
   const sendMessage = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/chat", {
+      const response = await fetch("http://127.0.0.1:8000/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ user_message: message }),
       });
-      const data = await res.json();
+      const data = await response.json();
       setResponse(data);
     } catch (error) {
-      console.error("Erreur lors de l'envoi du message:", error);
+      console.error("Erreur lors de la requête : ", error);
     }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ user_message: message }),
+        });
+        const data = await response.json();
+        setResponse(data);
+      } catch (error) {
+        console.error("Erreur lors de la requête : ", error);
+      }
+    };
+
+    fetchData();
+  }, [message]);
+
+  const handleInputChange = (e) => {
+    setMessage(e.target.value);
   };
 
   return (
@@ -61,9 +84,9 @@ function Chatbot() {
       <input
         type="text"
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={handleInputChange}
       />
-      <button onClick={sendMessage}>Envoyer</button>
+      <button onClick={sendMessage} variant="primary">Envoyer</button>
       <p>Réponse : {response && JSON.stringify(response)}</p>
     </div>
   );
