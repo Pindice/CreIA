@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'; // Importation de useState
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap'; // Button retiré car non utilisé
 import 'bootstrap/dist/css/bootstrap.min.css';
+import Chatbot from './components/chatbot';
 
 function App() {
   return (
@@ -34,49 +35,49 @@ function Home() {
   return <h2>Accueil</h2>;
 }
 
-function Chatbot() {
-  const [message, setMessage] = useState(""); // État pour le message à envoyer
-  const [response, setResponse] = useState(""); // État pour la réponse reçue
-  // Fonction pour envoyer le message lorsque l'utilisateur appuie sur "Envoyer"
-  const sendMessage = async () => {
-    try {
-      const response = await fetch("http://127.0.0.1:8000/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_message: message }),
-      });
-      const data = await response.json();
-      console.log(data);
-      if (data.messageResponse && typeof data.messageResponse === 'object') {
-        // Assurez-vous d'accéder à la propriété 'content' si 'messageResponse' est un objet.
-        setResponse(data.messageResponse.content);
-      } else {
-        // Si 'messageResponse' est une chaîne, vous pouvez la définir directement.
-        setResponse(data.messageResponse);
-      }
-    } catch (error) {
-      console.error("Erreur lors de la requête : ", error);
-    }
-  };
-  // Fonction pour gérer les changements dans le champ de texte, mise à jour de l'état du message
-  const handleInputChange = (e) => {
-    setMessage(e.target.value);
-  };
-  return (
-    <div>
-      <h2>Chatbot</h2>
-      <input
-        type="text"
-        value={message}
-        onChange={handleInputChange}
-      />
-      <button onClick={sendMessage}>Envoyer</button>
-      <p>Réponse : {response}</p> {/* Ici, nous affichons la chaîne de réponse */}
-    </div>
-  );  
-}
+// function Chatbot() {
+//   const [message, setMessage] = useState(""); // État pour le message à envoyer
+//   const [response, setResponse] = useState(""); // État pour la réponse reçue
+//   // Fonction pour envoyer le message lorsque l'utilisateur appuie sur "Envoyer"
+//   const sendMessage = async () => {
+//     try {
+//       const response = await fetch("http://127.0.0.1:8000/chat", {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({ user_message: message }),
+//       });
+//       const data = await response.json();
+//       console.log(data);
+//       if (data.messageResponse && typeof data.messageResponse === 'object') {
+//         // Assurez-vous d'accéder à la propriété 'content' si 'messageResponse' est un objet.
+//         setResponse(data.messageResponse.content);
+//       } else {
+//         // Si 'messageResponse' est une chaîne, vous pouvez la définir directement.
+//         setResponse(data.messageResponse);
+//       }
+//     } catch (error) {
+//       console.error("Erreur lors de la requête : ", error);
+//     }
+//   };
+//   // Fonction pour gérer les changements dans le champ de texte, mise à jour de l'état du message
+//   const handleInputChange = (e) => {
+//     setMessage(e.target.value);
+//   };
+//   return (
+//     <div>
+//       <h2>Chatbot</h2>
+//       <input
+//         type="text"
+//         value={message}
+//         onChange={handleInputChange}
+//       />
+//       <button onClick={sendMessage}>Envoyer</button>
+//       <p>Réponse : {response}</p> {/* Ici, nous affichons la chaîne de réponse */}
+//     </div>
+//   );  
+// }
 
 function ArticleGenerator() {
   return <h2>Générateur d'Articles</h2>;
