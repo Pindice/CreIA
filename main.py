@@ -44,7 +44,48 @@ async def chatbot_endpoint(request: ChatRequest):
     except Exception as e:
         logger.error(f"Une erreur est survenue: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int, q: str = None):
+    return {"item_id": item_id, "q": q}
+
+class ArticleRequest(BaseModel):
+    topic: str  # Le sujet de l'article à générer
+
+@app.post("/generate_article")
+async def generate_article_endpoint(request: ArticleRequest):
+    try:
+        # Préparation du prompt pour la génération de l'article
+        messages = [
+            ChatMessage(role="user", content=f"Write a detailed article about {request.topic}.")
+        ]
+
+        chat_response = client.chat(
+            model="mistral-tiny",  # Remplacez par le modèle de votre choix
+            messages=messages,
+            # temperature=0.7,  # Ajustez selon le niveau de créativité désiré
+            max_tokens=300  # Ajustez selon la longueur d'article souhaitée
+        )
         
+        # Imprimer les informations sur les tokens dans le backend
+        print("Tokens utilisés pour la prompt:", chat_response.usage.prompt_tokens)
+        print("Total de tokens utilisés:", chat_response.usage.total_tokens)
+        print("Tokens utilisés pour la complétion:", chat_response.usage.completion_tokens)
+
+        # Renvoyer l'article généré au frontend
+        generated_article = chat_response.choices[0].message.content
+        return {'article': generated_article}
+
+    except Exception as e:
+        logger.error(f"Une erreur est survenue: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 # @app.post("/chat")
 # async def chatbot_endpoint(request: ChatRequest):
 #     logger.info(f"API Key: {api_key}")
@@ -68,13 +109,3 @@ async def chatbot_endpoint(request: ChatRequest):
 #     except Exception as e:
 #         traceback.print_exc()
 #         raise HTTPException(status_code=500, detail=str(e))
-    
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str = None):
-    return {"item_id": item_id, "q": q}

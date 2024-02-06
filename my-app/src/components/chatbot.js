@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './chatbot.css';
+import './Chatbot.css';
 
 const Chatbot = () => {
   const [input, setInput] = useState('');
@@ -48,6 +48,7 @@ const Chatbot = () => {
 
   return (
     <div className="chatbot-container">
+      <h2>Chatbot</h2> {/* Ajoutez cette ligne pour votre titre */}
       <div className="chatbot-messages">
         {messages.map((message, index) => (
           <div
