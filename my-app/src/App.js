@@ -4,6 +4,7 @@ import { Navbar, Nav, Container, Button } from 'react-bootstrap'; // Button reti
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Chatbot from './components/Chatbot';
 import ArticleGenerator from './components/ArticleGenerator';
+import Articles from './components/Article';
 
 
 function App() {
@@ -14,7 +15,6 @@ function App() {
           <Navbar.Brand href="/">Mon App</Navbar.Brand>
           <Nav className="me-auto">
             {/* Utilisation de Link de react-router-dom avec la prop 'as' pour une intégration fluide avec React-Bootstrap */}
-            <Link to="/" className="nav-link">Accueil</Link>
             <Link to="/chatbot" className="nav-link">Chatbot</Link>
             <Link to="/article-generator" className="nav-link">Générateur d'Articles</Link>
             <Link to="/articles" className="nav-link">Articles</Link>
@@ -41,9 +41,9 @@ function Home() {
 //   return <h2>Générateur d'Articles</h2>;
 // }
 
-function Articles() {
-  return <h2>Articles</h2>;
-}
+// function Articles() {
+//   return <h2>Articles</h2>;
+// }
 
 export default App;
 

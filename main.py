@@ -1,11 +1,26 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os, traceback, logging
 from httpx import post
+from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
+from typing import Optional
+
+
+Base = declarative_base()
+
+class Article(Base):
+    __tablename__ = "articles"
+    id = Column(Integer, primary_key=True, index=True)
+    topic = Column(String, index=True)
+    content = Column(String)
+
 
 
 load_dotenv()
@@ -13,6 +28,11 @@ api_key = os.getenv("MISTRAL_API_KEY")
 client = MistralClient(api_key=api_key)
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.DEBUG)
+
+engine = create_engine(os.getenv("DATABASE_URL"))
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -26,6 +46,10 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     user_message: str
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
 
 @app.post("/chat")
 async def chatbot_endpoint(request: ChatRequest):
@@ -45,19 +69,13 @@ async def chatbot_endpoint(request: ChatRequest):
         logger.error(f"Une erreur est survenue: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str = None):
-    return {"item_id": item_id, "q": q}
-
 class ArticleRequest(BaseModel):
-    topic: str  # Le sujet de l'article à générer
+    topic: str
+    content: Optional[str] = None
 
 @app.post("/generate_article")
 async def generate_article_endpoint(request: ArticleRequest):
+    print(jsonable_encoder(request))
     try:
         # Préparation du prompt pour la génération de l'article
         messages = [
@@ -84,6 +102,35 @@ async def generate_article_endpoint(request: ArticleRequest):
         logger.error(f"Une erreur est survenue: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@app.get("/articles")
+def get_articles(db: SessionLocal = Depends(get_db)):
+    return db.query(Article).all()
+
+@app.post("/save_article")
+async def save_article(article: ArticleRequest, db: Session = Depends(get_db)):
+    db_article = Article(topic=article.topic, content=article.content)
+    db.add(db_article)
+    db.commit()
+    db.refresh(db_article)
+    return {"message": "Article saved successfully", "article_id": db_article.id}
+
+@app.delete("/articles/{article_id}")
+def delete_article(article_id: int, db: Session = Depends(get_db)):
+    article_to_delete = db.query(Article).filter(Article.id == article_id).first()
+    if article_to_delete:
+        db.delete(article_to_delete)
+        db.commit()
+        return {"message": "Article deleted"}
+    else:
+        raise HTTPException(status_code=404, detail="Article not found")
 
 
 # @app.post("/chat")
