@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'; // Importation de useState
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap'; // Button retiré car non utilisé
+import { Navbar, Nav, Container } from 'react-bootstrap'; // Button retiré car non utilisé
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Chatbot from './components/Chatbot';
 import ArticleGenerator from './components/ArticleGenerator';
@@ -37,6 +37,8 @@ function Home() {
   return <h2>Accueil</h2>;
 }
 
+export default App;
+
 // function ArticleGenerator() {
 //   return <h2>Générateur d'Articles</h2>;
 // }
@@ -45,7 +47,6 @@ function Home() {
 //   return <h2>Articles</h2>;
 // }
 
-export default App;
 
 // function Chatbot() {
 //   const [message, setMessage] = useState(""); // État pour le message à envoyer

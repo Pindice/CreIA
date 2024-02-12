@@ -41,7 +41,7 @@ const Articles = () => {
             <li key={article.id}>
               <h3>{article.topic}</h3>
               <p>{article.content}</p>
-              <button onClick={() => deleteArticle(article.id)}>Supprimer</button>
+              <button style={{ marginBottom: '20px' }} onClick={() => deleteArticle(article.id)}>Supprimer</button>
             </li>
           ))}
         </ul>

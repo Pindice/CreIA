@@ -79,7 +79,8 @@ async def generate_article_endpoint(request: ArticleRequest):
     try:
         # Préparation du prompt pour la génération de l'article
         messages = [
-            ChatMessage(role="user", content=f"Write a detailed article about {request.topic}.")
+            ChatMessage(role="user", content=f"Ecrit moi un article détaillé sur {request.topic}.")
+            # ChatMessage(role="user", content=f"Write a detailed article about {request.topic}.")
         ]
 
         chat_response = client.chat(
@@ -111,7 +112,7 @@ def get_db():
 
 
 @app.get("/articles")
-def get_articles(db: SessionLocal = Depends(get_db)):
+def get_articles(db: Session = Depends(get_db)):
     return db.query(Article).all()
 
 @app.post("/save_article")
