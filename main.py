@@ -54,8 +54,8 @@ def read_root():
 @app.post("/chat")
 async def chatbot_endpoint(request: ChatRequest):
     try:
-        messages = [ChatMessage(role="user", content=request.user_message)]
-        chat_response = client.chat(model="mistral-tiny", messages=messages)
+        messages = [ChatMessage(role="user", content=f"Réponds moi en français à {request.user_message}.")]
+        chat_response = client.chat(model="mistral-small", messages=messages)
 
         # Imprimer les informations sur les tokens dans le backend
         print("Tokens utilisés pour la prompt:", chat_response.usage.prompt_tokens)
@@ -79,7 +79,7 @@ async def generate_article_endpoint(request: ArticleRequest):
     try:
         # Préparation du prompt pour la génération de l'article
         messages = [
-            ChatMessage(role="user", content=f"Ecrit moi un article détaillé sur {request.topic}.")
+            ChatMessage(role="user", content=f"Ecrit moi un article détaillé en français sur {request.topic}.")
             # ChatMessage(role="user", content=f"Write a detailed article about {request.topic}.")
         ]
 
