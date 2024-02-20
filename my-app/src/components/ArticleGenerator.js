@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 
 const ArticleGenerator = () => {
@@ -67,7 +69,14 @@ const ArticleGenerator = () => {
       />
       <button onClick={generateArticle}>Generate Article</button>
       <div>
-        {article && <div><h3>Generated Article</h3><p>{article}</p></div>}
+        {article && <div><h3>Generated Article</h3><CKEditor
+        editor={ClassicEditor}
+        data={article}
+        onChange={(event, editor) => {
+          const data = editor.getData();
+          setArticle(data);
+          }}/>
+      </div>}
         <button onClick={() => saveArticle(topic, article)}>Save Article</button>
         <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
