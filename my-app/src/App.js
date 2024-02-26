@@ -20,9 +20,6 @@ function App() {
           <Nav className="me-auto">
             <Link to="/article-generator" className="nav-link">Générateur d'Articles</Link>
             <Link to="/articles" className="nav-link">Articles</Link>
-            <button onClick={() => setShowChatbot(!showChatbot)} className="nav-link" style={{background: 'none', border: 'none', color: 'rgba(255,255,255,.55)', cursor: 'pointer'}}>
-                {showChatbot ? 'Masquer Chatbot' : 'Afficher Chatbot'}
-            </button>
           </Nav>
         </Container>
       </Navbar>
