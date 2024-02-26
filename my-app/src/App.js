@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Chatbot from './components/Chatbot';
 import ArticleGenerator from './components/ArticleGenerator';
 import Articles from './components/Article';
+import Login from './components/Login';
 import { ReactComponent as ChatIcon } from './assets/chat-icon.svg';
 
 
 function App() {
   const [showChatbot, setShowChatbot] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
+  useEffect(() => {
+    setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
+    setIsLoggedIn(false);
+    window.location.href = '/login';
+  };
 
   return (
     <>
@@ -20,14 +32,20 @@ function App() {
           <Nav className="me-auto">
             <Link to="/article-generator" className="nav-link">Générateur d'Articles</Link>
             <Link to="/articles" className="nav-link">Articles</Link>
+            {!isLoggedIn ? (
+                <Link to="/login" className="nav-link">Login</Link>
+              ) : (
+                <Nav.Link onClick={logout}>Déconnexion</Nav.Link>
+              )}
           </Nav>
         </Container>
       </Navbar>
       <Container style={{ marginTop: '20px' }}>
         <Routes>
-          <Route path="/article-generator" element={<ArticleGenerator />} />
+          <Route path="/article-generator" element={isLoggedIn ? <ArticleGenerator /> : <Login />} />
           <Route path="/articles" element={<Articles />} />
           <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
         </Routes>
       </Container>
     </Router>

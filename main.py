@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
+from fastapi.security import OAuth2PasswordBearer
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 from pydantic import BaseModel
@@ -11,6 +12,7 @@ from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Optional
+from jose import JWTError, jwt
 
 
 Base = declarative_base()
@@ -21,11 +23,18 @@ class Article(Base):
     topic = Column(String, index=True)
     content = Column(String)
 
-
+class Admin(Base):
+    __tablename__ = "admins"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    password = Column(String)  # Make sure to hash passwords!
 
 load_dotenv()
 api_key = os.getenv("MISTRAL_API_KEY")
 client = MistralClient(api_key=api_key)
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+HTTP_401_UNAUTHORIZED = status.HTTP_401_UNAUTHORIZED
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.DEBUG)
 
@@ -46,6 +55,23 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     user_message: str
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        # Fetch user from database and return user
+    except JWTError:
+        raise credentials_exception
 
 @app.get("/")
 def read_root():
@@ -79,7 +105,7 @@ async def generate_article_endpoint(request: ArticleRequest):
     try:
         # Préparation du prompt pour la génération de l'article
         messages = [
-            ChatMessage(role="user", content=f"Ecrit moi un article détaillé en français sur {request.topic}.")
+            ChatMessage(role="user", content=f"Ecrit moi un article en HTML détaillé en français sur {request.topic}.")
             # ChatMessage(role="user", content=f"Write a detailed article about {request.topic}.")
         ]
 
