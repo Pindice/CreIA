@@ -1,35 +1,44 @@
-import React, { useState, useEffect } from 'react'; // Importation de useState
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Navbar, Nav, Container } from 'react-bootstrap'; // Button retiré car non utilisé
+import { Navbar, Nav, Container } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Chatbot from './components/Chatbot';
 import ArticleGenerator from './components/ArticleGenerator';
 import Articles from './components/Article';
+import { ReactComponent as ChatIcon } from './assets/chat-icon.svg';
 
 
 function App() {
+  const [showChatbot, setShowChatbot] = useState(false);
+
   return (
+    <>
     <Router>
       <Navbar bg="dark" variant="dark" expand="lg" sticky="top">
         <Container>
           <Navbar.Brand href="/">Mon App</Navbar.Brand>
           <Nav className="me-auto">
-            {/* Utilisation de Link de react-router-dom avec la prop 'as' pour une intégration fluide avec React-Bootstrap */}
-            <Link to="/chatbot" className="nav-link">Chatbot</Link>
             <Link to="/article-generator" className="nav-link">Générateur d'Articles</Link>
             <Link to="/articles" className="nav-link">Articles</Link>
+            <button onClick={() => setShowChatbot(!showChatbot)} className="nav-link" style={{background: 'none', border: 'none', color: 'rgba(255,255,255,.55)', cursor: 'pointer'}}>
+                {showChatbot ? 'Masquer Chatbot' : 'Afficher Chatbot'}
+            </button>
           </Nav>
         </Container>
       </Navbar>
       <Container style={{ marginTop: '20px' }}>
         <Routes>
-          <Route path="/chatbot" element={<Chatbot />} />
           <Route path="/article-generator" element={<ArticleGenerator />} />
           <Route path="/articles" element={<Articles />} />
           <Route path="/" element={<Home />} />
         </Routes>
       </Container>
     </Router>
+    <div style={{ position: 'fixed', bottom: 10, right: 10, cursor: 'pointer', zIndex: 1050 }}>
+      <ChatIcon onClick={() => setShowChatbot(!showChatbot)} />
+    </div>
+    {showChatbot && <Chatbot />} {/* Ceci place le Chatbot sur toutes les pages, en bas à droite */}
+    </>
   );
 }
 
@@ -38,6 +47,7 @@ function Home() {
 }
 
 export default App;
+
 
 // function ArticleGenerator() {
 //   return <h2>Générateur d'Articles</h2>;

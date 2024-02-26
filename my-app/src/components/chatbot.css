@@ -1,14 +1,18 @@
 /* chatbot.css */
 
-.chatbot-container {
-    width: 400px;
-    margin: 0 auto;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 16px;
-    background-color: #f8f8f8;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  .chatbot-container {
+    position: fixed; /* Ou 'absolute' si vous préférez */
+    bottom: 60px;
+    right: 20px;
+    width: 300px; /* Ajustez la largeur selon vos besoins */
+    height: auto;
+    z-index: 1000; /* Assure que le chatbot reste au-dessus des autres éléments */
+    background-color: white; /* Choisissez une couleur de fond appropriée */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Ajoute un peu d'ombre pour le style */
+    overflow: hidden; /* Assure que le contenu ne dépasse pas du conteneur */
   }
+  
   .chatbot-messages {
     height: 400px;
     overflow-y: scroll;
