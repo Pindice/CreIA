@@ -4,10 +4,11 @@ from sqlalchemy.orm import Session
 import bcrypt
 
 def get_password_hash(password):
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def create_admin(db: Session, username: str, password: str):
     hashed_password = get_password_hash(password)
+    print(f"Hashed password: {hashed_password}")  # Ajoutez cette ligne pour vérifier
     db_admin = Admin(username=username, password=hashed_password)
     db.add(db_admin)
     db.commit()
@@ -19,8 +20,8 @@ def main():
     Admin.__table__.create(bind=engine, checkfirst=True)
     
     # Ajouter un nouvel admin
-    username = "pindice"  # Remplacer par le nom d'utilisateur souhaité
-    password = "974"  # Remplacer par le mot de passe souhaité
+    username = "Max"  # Remplacer par le nom d'utilisateur souhaité
+    password = "mdp123"  # Remplacer par le mot de passe souhaité
     
     db = SessionLocal()
     create_admin(db, username, password)
