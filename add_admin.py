@@ -20,8 +20,8 @@ def main():
     Admin.__table__.create(bind=engine, checkfirst=True)
     
     # Ajouter un nouvel admin
-    username = "Max"  # Remplacer par le nom d'utilisateur souhaité
-    password = "mdp123"  # Remplacer par le mot de passe souhaité
+    username = "pindice"  # Remplacer par le nom d'utilisateur souhaité
+    password = "974"  # Remplacer par le mot de passe souhaité
     
     db = SessionLocal()
     create_admin(db, username, password)
