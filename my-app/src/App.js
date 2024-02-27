@@ -42,7 +42,7 @@ function App() {
       </Navbar>
       <Container style={{ marginTop: '20px' }}>
         <Routes>
-          <Route path="/article-generator" element={isLoggedIn ? <ArticleGenerator /> : <Login />} />
+          <Route path="/article-generator" element={isLoggedIn ? <ArticleGenerator /> : <Login setIsLoggedIn={setIsLoggedIn}/>} />
           <Route path="/articles" element={<Articles />} />
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
