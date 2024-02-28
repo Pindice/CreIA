@@ -9,6 +9,9 @@ const ArticleGenerator = () => {
   const [topic, setTopic] = useState('');
   const [instructions, setInstructions] = useState('');
   const [article, setArticle] = useState('');
+  const [articleId, setArticleId] = useState(null); // Pour stocker l'ID de l'article généré
+  const [initialContent, setInitialContent] = useState('');
+  const [showGenerateButton, setShowGenerateButton] = useState(true); // Pour contrôler l'affichage du bouton de génération
   const [selectedImage, setSelectedImage] = useState(null);
   const [publishDate, setPublishDate] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -41,17 +44,26 @@ const ArticleGenerator = () => {
       });
       const data = await response.json();
       setArticle(data.article);
+      setArticleId(data.article_id);
       setModalMessage('');
+      setShowGenerateButton(false);
     } catch (error) {
       console.error('Error generating article:', error);
       setArticle('Failed to generate article. Please try again.');
     }
     setIsGenerating(false);
+    setShowGenerateButton(false);
   };
 
   const saveArticle = async () => {
+    // if (article === initialContent) {
+    //   alert("No changes detected. Article not saved."); // Vous pouvez choisir de ne pas sauvegarder ou d'informer l'utilisateur
+    //   return;
+    // }
     const formData = new FormData();
+    formData.append('article_id', articleId);
     formData.append('topic', topic);
+    formData.append('instructions', instructions)
     formData.append('content', article);
     if (selectedImage) {
       formData.append('image', selectedImage);
@@ -64,13 +76,20 @@ const ArticleGenerator = () => {
             body: formData,
         });
         if (response.ok) {
-          setModalMessage("Article saved successfully");
-          closeModalAndRedirect();
+          const responseData = await response.json();
+          setModalMessage(responseData.message);
+          if (responseData.message.includes("No changes detected")) {
+            // Affichez un message spécifique ou gérez ce cas comme nécessaire
+            alert(responseData.message); // Par exemple
+          } else {
+            closeModalAndRedirect();
+          }
         } else {
           const errorData = await response.json();
           console.error('Error saving article:', errorData);
           setModalMessage("Failed to save article: " + JSON.stringify(errorData.errors));
         }
+        
         
     } catch (error) {
         console.error('Error saving article:', error);
@@ -78,6 +97,31 @@ const ArticleGenerator = () => {
     }
     setShowModal(true);
   };
+
+  const regenerateArticle = async () => {
+    setIsGenerating(true); // Indiquer que la génération est en cours
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/regenerate_article/${articleId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          instructions: instructions, // Utiliser l'état local 'instructions' pour les nouvelles instructions
+        }),
+      });
+  
+      if (!response.ok) throw new Error('Failed to regenerate article');
+  
+      const data = await response.json();
+      setArticle(data.new_content); // Mettre à jour l'article avec le nouveau contenu généré
+      setIsGenerating(false); // Réinitialiser l'indicateur de génération
+    } catch (error) {
+      console.error('Error regenerating article:', error);
+      setIsGenerating(false); // Assurez-vous de réinitialiser l'indicateur même en cas d'erreur
+    }
+  };
+  
 
 
   return (
@@ -97,9 +141,11 @@ const ArticleGenerator = () => {
       rows="4"  // Nombre de lignes dans la zone de texte
       ></textarea>
       <br></br>
-      <button onClick={generateArticle} disabled={isGenerating}>
-        {isGenerating ? 'Generating...' : 'Generate Article'}
-      </button>
+      {showGenerateButton && (
+        <button onClick={generateArticle} disabled={isGenerating}>
+          {isGenerating ? 'Generating...' : 'Generate Article'}
+        </button>
+      )}
       <div>
         {article && <div><h3>Generated Article</h3><CKEditor
         editor={ClassicEditor}
@@ -110,7 +156,14 @@ const ArticleGenerator = () => {
           }}/>
       </div>}
       <br></br>
-      <button onClick={() => setShowModal(true)}>Save Article</button>
+      {articleId && (
+        <>
+          <button onClick={regenerateArticle} disabled={isGenerating}>
+            {isGenerating ? 'Regenerating...' : 'Regenerate Article'}
+          </button>
+          <button onClick={() => setShowModal(true)}>Save Article</button>
+        </>
+      )}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Save Article</Modal.Title>

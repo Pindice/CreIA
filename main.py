@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status, UploadFile, File, Form, Depends
+from fastapi import FastAPI, HTTPException, status, UploadFile, APIRouter, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os, traceback, logging
 from httpx import post
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, create_engine
+from sqlalchemy import func, Column, Integer, String, DateTime, ForeignKey, Boolean, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from typing import Optional
@@ -29,6 +29,8 @@ class Article(Base):
     content = Column(String)
     image = Column(String)  # Store image URL or path
     last_date = Column(DateTime, default=datetime.utcnow)  # To track the last update
+    is_temporary = Column(Boolean, default=True)  # Champ pour marquer l'article comme temporaire
+
     
     # Relationship with Article History
     history = relationship("ArticleHistory", back_populates="article")
@@ -37,6 +39,7 @@ class ArticleHistory(Base):
     __tablename__ = "articles_history"
     id = Column(Integer, primary_key=True, index=True)
     date_modif = Column(DateTime, default=datetime.utcnow)
+    previous_instructions = Column(String)
     previous_content = Column(String)
     admin_id = Column(Integer, ForeignKey('admins.id'))
     article_id = Column(Integer, ForeignKey('articles.id'))
@@ -73,6 +76,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+router = APIRouter()
 
 app.add_middleware(
     CORSMiddleware,
@@ -149,9 +154,10 @@ async def generate_article_endpoint(request: ArticleRequest, db: Session = Depen
             title=request.topic,  # Vous devez générer le titre séparément si nécessaire
             topic=request.topic,
             instructions=request.instructions,
-            content=chat_response.choices[0].message.content,
+            content=generated_article,
             image=None,  # Vous ajouterez l'image plus tard si nécessaire
-            last_date=datetime.utcnow()
+            last_date=datetime.utcnow(),
+            is_temporary=True
         )
         db.add(new_article)
         db.commit()
@@ -160,6 +166,7 @@ async def generate_article_endpoint(request: ArticleRequest, db: Session = Depen
         # Création de la première entrée d'historique
         new_history = ArticleHistory(
             article_id=new_article.id,
+            previous_instructions=new_article.instructions,
             previous_content=new_article.content,
             date_modif=datetime.utcnow(),
             admin_id=None  # Vous devez déterminer quel admin est connecté et passer son ID
@@ -167,7 +174,7 @@ async def generate_article_endpoint(request: ArticleRequest, db: Session = Depen
         db.add(new_history)
         db.commit()
 
-        return {'article_id': new_article.id, 'article': new_article.content}
+        return {'article': generated_article, 'article_id': new_article.id}
     
     except Exception as e:
         db.rollback()  # Important en cas d'échec, pour ne pas laisser la DB dans un état incohérent
@@ -193,59 +200,112 @@ async def upload_image(image: UploadFile = File(...)):
 
 @app.post("/save_article")
 async def save_article(
+    article_id: int = Form(...),  # ID de l'article temporaire à mettre à jour
     topic: str = Form(...), 
+    instructions: str = Form(...),
     content: str = Form(...), 
-    image: UploadFile = File(None),  # Optional file upload
-    last_date: datetime = Form(...),
+    image: UploadFile = File(None),  # Téléchargement d'image optionnel
     db: Session = Depends(get_db)
 ):
-    try:
-        # Debugging prints
-        print(f"Received article with topic: {topic}")
-        print(f"Content length: {len(content)} characters")
-        print(f"Publish date: {last_date}")
+    # Recherche de l'article temporaire par son ID
+    temp_article = db.query(Article).filter_by(id=article_id, is_temporary=True).first()
 
-        # Proper logging
-        logger.info(f"Processing article with topic: {topic}")
+    if temp_article:
+        # Mise à jour de l'article temporaire si trouvé
+        temp_article.topic = topic.strip()
+        temp_article.content = content.strip()
+        temp_article.last_date = datetime.utcnow()
+        temp_article.is_temporary = False  # Marquez l'article comme définitif
 
-        # Handle image upload if provided
         if image:
+            # Gestion de l'image si fournie
             image_path = f"/path/to/images/{image.filename}"
             with open(image_path, "wb") as buffer:
                 shutil.copyfileobj(image.file, buffer)
-            print(f"Image saved to {image_path}")
-            logger.info(f"Image saved to {image_path}")
-        else:
-            image_path = None
-            print("No image uploaded")
-            logger.info("No image uploaded")
+            temp_article.image = image_path
 
-        # Create new Article instance
-        db_article = Article(
-            title=topic,  # Assuming you want to use the topic as the title
-            topic=topic,
-            content=content,
-            last_date=last_date,
-            image=image_path  # Save the path to the image or URL if using cloud storage
+        # Création d'une entrée d'historique pour cette mise à jour
+        history_entry = ArticleHistory(
+            article_id=temp_article.id,
+            previous_instructions=temp_article.instructions,
+            previous_content=temp_article.content,
+            date_modif=datetime.utcnow(),
+            admin_id=None  # Assurez-vous d'assigner le bon admin_id
         )
-        db.add(db_article)
+        db.add(history_entry)
         db.commit()
-        db.refresh(db_article)
-        logger.info(f"Article saved successfully with ID: {db_article.id}")
-        return {"message": "Article saved successfully", "article_id": db_article.id}
-    except Exception as e:
-        # Rollback in case of exception
-        db.rollback()
-        print(f"Failed to save article: {e}")
-        logger.error("Failed to save article", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail="An error occurred while saving the article."
+
+        logger.info(f"Article updated successfully with ID: {temp_article.id}")
+        return {"message": "Article updated successfully", "article_id": temp_article.id}
+    else:
+        # Si l'article temporaire n'est pas trouvé, considérez comme une nouvelle sauvegarde
+        new_article = Article(
+            title=topic.strip(),
+            topic=topic.strip(),
+            instructions=instructions.strip(),
+            content=content.strip(),
+            last_date=datetime.utcnow(),
+            is_temporary=False  # L'article est directement marqué comme définitif
         )
+
+        if image:
+            # Gestion de l'image pour le nouvel article
+            image_path = f"/path/to/images/{image.filename}"
+            with open(image_path, "wb") as buffer:
+                shutil.copyfileobj(image.file, buffer)
+            new_article.image = image_path
+
+        db.add(new_article)
+        db.commit()
+        db.refresh(new_article)
+
+        logger.info(f"New article saved successfully with ID: {new_article.id}")
+        return {"message": "New article saved successfully", "article_id": new_article.id}
+
+
+class RegenerateArticleRequest(BaseModel):
+    instructions: str
+
+@router.post("/regenerate_article/{article_id}")
+async def regenerate_article(article_id: int, request: RegenerateArticleRequest, db: Session = Depends(get_db)):
+    article = db.query(Article).filter(Article.id == article_id).first()
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # Utiliser la logique de génération d'article avec les nouvelles instructions
+    # Similaire à l'endpoint /generate_article mais avec request.instructions
+    messages = [
+        ChatMessage(role="user", content=f"Ecrit moi un article en HTML détaillé en français sur {article.topic} en suivant ces instructions : {request.instructions}")
+    ]
+
+    chat_response = client.chat(
+        model="mistral-tiny",  # Ou tout autre modèle de votre choix
+        messages=messages,
+        max_tokens=300
+    )
+
+    new_content = chat_response.choices[0].message.content
+
+    # Enregistrer les modifications dans l'historique sans mettre à jour l'article original
+    new_history = ArticleHistory(
+        article_id=article.id,
+        previous_instructions=article.instructions,
+        previous_content=article.content,
+        date_modif=datetime.utcnow(),
+        admin_id=None  # Assurez-vous d'identifier correctement l'admin
+    )
+    db.add(new_history)
+    db.commit()
+
+    # (Optionnel) Mettre à jour l'article dans la base de données
+    # article.content = new_content
+    # article.instructions = new_instructions
+    # db.commit()
+
+    return {"message": "Article regenerated and history entry created", "new_content": new_content}
 
 @app.put("/articles/{article_id}")
 def update_article(article_id: int, request: ArticleRequest, db: Session = Depends(get_db)):
-    # Trouver l'article
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -253,17 +313,21 @@ def update_article(article_id: int, request: ArticleRequest, db: Session = Depen
     # Enregistrer l'état actuel dans l'historique
     history_entry = ArticleHistory(
         article_id=article.id,
-        content=article.content,
-        date=datetime.utcnow()
+        previous_instructions=article.instructions,  # Utilisation du bon champ
+        previous_content=article.content,
+        date_modif=datetime.utcnow(),
+        admin_id=None  # Assurez-vous de définir correctement l'admin ID
     )
     db.add(history_entry)
     
-    # Mettre à jour l'article
+    # Mettre à jour l'article avec les nouvelles informations
+    article.instructions = request.instructions  # Mise à jour des instructions
     article.content = request.content
     article.last_date = datetime.utcnow()
     db.commit()
 
     return {"message": "Article updated", "article_id": article.id}
+
 
 
 @app.delete("/articles/{article_id}")
@@ -275,6 +339,8 @@ def delete_article(article_id: int, db: Session = Depends(get_db)):
         return {"message": "Article deleted"}
     else:
         raise HTTPException(status_code=404, detail="Article not found")
+    
+    
 
 #LOGIN    
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
