@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { useNavigate } from 'react-router-dom';
 
 
 const Articles = () => {
   const [articles, setArticles] = useState([]);
+  const navigate = useNavigate();
 
   // Fonction pour charger les articles depuis le backend
   const fetchArticles = async () => {
@@ -74,6 +76,7 @@ const Articles = () => {
                 const data = editor.getData();
                 updateArticleContent(article.id, data);
               }}/>
+              <button style={{ marginBottom: '20px' }} onClick={() => navigate(`/article-generator/${article.id}`)}>Modifier</button>
               <button style={{ marginBottom: '20px' }} onClick={() => deleteArticle(article.id)}>Supprimer</button>
             </li>
           ))}
