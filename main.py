@@ -304,31 +304,6 @@ async def regenerate_article(article_id: int, request: RegenerateArticleRequest,
 
     return {"message": "Article regenerated and history entry created", "new_content": new_content}
 
-@app.put("/articles/{article_id}")
-def update_article(article_id: int, request: ArticleRequest, db: Session = Depends(get_db)):
-    article = db.query(Article).filter(Article.id == article_id).first()
-    if not article:
-        raise HTTPException(status_code=404, detail="Article not found")
-
-    # Enregistrer l'état actuel dans l'historique
-    history_entry = ArticleHistory(
-        article_id=article.id,
-        previous_instructions=article.instructions,  # Utilisation du bon champ
-        previous_content=article.content,
-        date_modif=datetime.utcnow(),
-        admin_id=None  # Assurez-vous de définir correctement l'admin ID
-    )
-    db.add(history_entry)
-    
-    # Mettre à jour l'article avec les nouvelles informations
-    article.instructions = request.instructions  # Mise à jour des instructions
-    article.content = request.content
-    article.last_date = datetime.utcnow()
-    db.commit()
-
-    return {"message": "Article updated", "article_id": article.id}
-
-
 
 @app.delete("/articles/{article_id}")
 def delete_article(article_id: int, db: Session = Depends(get_db)):
@@ -395,6 +370,29 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+@app.put("/articles/{article_id}")
+def update_article(article_id: int, request: ArticleRequest, db: Session = Depends(get_db), current_user: Admin = Depends(get_current_user)):
+    article = db.query(Article).filter(Article.id == article_id).first()
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # Enregistrer l'état actuel dans l'historique
+    history_entry = ArticleHistory(
+        article_id=article.id,
+        previous_instructions=article.instructions,  # Utilisation du bon champ
+        previous_content=article.content,
+        date_modif=datetime.utcnow(),
+        admin_id=None  # Assurez-vous de définir correctement l'admin ID
+    )
+    db.add(history_entry)
+    
+    # Mettre à jour l'article avec les nouvelles informations
+    article.instructions = request.instructions  # Mise à jour des instructions
+    article.content = request.content
+    article.last_date = datetime.utcnow()
+    db.commit()
+
+    return {"message": "Article updated", "article_id": article.id}
 
 # @app.post("/chat")
 # async def chatbot_endpoint(request: ChatRequest):

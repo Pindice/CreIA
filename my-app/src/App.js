@@ -6,6 +6,7 @@ import Chatbot from './components/Chatbot';
 import ArticleGenerator from './components/ArticleGenerator';
 import Articles from './components/Article';
 import Login from './components/Login';
+import HomeArticles from './components/HomeArticles';
 import { ReactComponent as ChatIcon } from './assets/chat-icon.svg';
 
 
@@ -25,40 +26,47 @@ function App() {
 
   return (
     <>
-    <Router>
-      <Navbar bg="dark" variant="dark" expand="lg" sticky="top">
-        <Container>
-          <Navbar.Brand href="/">Mon App</Navbar.Brand>
-          <Nav className="me-auto">
-            <Link to="/article-generator" className="nav-link">Générateur d'Articles</Link>
-            <Link to="/articles" className="nav-link">Articles</Link>
-            {!isLoggedIn ? (
+      <Router>
+        <Navbar bg="dark" variant="dark" expand="lg" sticky="top">
+          <Container>
+            <Navbar.Brand href="/">Mon Blog</Navbar.Brand>
+            <Nav className="me-auto">
+              <Link to="/article-generator" className="nav-link">Générateur d'Articles</Link>
+              <Link to="/articles" className="nav-link">Articles</Link>
+            </Nav>
+            <Nav className="ms-auto">
+              {!isLoggedIn ? (
                 <Link to="/login" className="nav-link">Login</Link>
               ) : (
-                <Nav.Link onClick={logout}>Déconnexion</Nav.Link>
+                <Nav.Link as="span" onClick={logout} style={{cursor: 'pointer'}}>Déconnexion</Nav.Link>
               )}
-          </Nav>
+            </Nav>
+          </Container>
+        </Navbar>
+        <Container style={{ marginTop: '20px' }}>
+          <Routes>
+            <Route path="/article-generator" element={isLoggedIn ? <ArticleGenerator /> : <Login setIsLoggedIn={setIsLoggedIn}/>} />
+            <Route path="/articles" element={<Articles />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+          </Routes>
         </Container>
-      </Navbar>
-      <Container style={{ marginTop: '20px' }}>
-        <Routes>
-          <Route path="/article-generator" element={isLoggedIn ? <ArticleGenerator /> : <Login setIsLoggedIn={setIsLoggedIn}/>} />
-          <Route path="/articles" element={<Articles />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
-        </Routes>
-      </Container>
-    </Router>
-    <div style={{ position: 'fixed', bottom: 10, right: 10, cursor: 'pointer', zIndex: 1050 }}>
-      <ChatIcon onClick={() => setShowChatbot(!showChatbot)} />
-    </div>
-    {showChatbot && <Chatbot />} {/* Ceci place le Chatbot sur toutes les pages, en bas à droite */}
+      </Router>
+      <div style={{ position: 'fixed', bottom: 10, right: 10, cursor: 'pointer', zIndex: 1050 }}>
+        <ChatIcon onClick={() => setShowChatbot(!showChatbot)} />
+      </div>
+      {showChatbot && <Chatbot />} {/* Ceci place le Chatbot sur toutes les pages, en bas à droite */}
     </>
   );
 }
 
 function Home() {
-  return <h2>Accueil</h2>;
+  return (
+    <div>
+      <h2>Accueil</h2>
+      <HomeArticles />
+    </div>
+  );
 }
 
 export default App;
