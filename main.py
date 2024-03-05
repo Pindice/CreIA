@@ -391,30 +391,30 @@ async def update_article(
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
-
-    # Enregistrer l'état actuel dans l'historique
-    history_entry = ArticleHistory(
-        article_id=article.id,
-        previous_instructions=article.instructions,
-        previous_content=article.content,
-        date_modif=datetime.utcnow(),
-        admin_id=current_user.id  # Utiliser l'ID de l'utilisateur connecté
-    )
-    db.add(history_entry)
     
     # Mettre à jour l'article avec les nouvelles informations
-    article.title = title  # Assurez-vous que l'article a un champ `title`
+    article.title = title
     article.topic = topic
     article.instructions = instructions
     article.content = content
     article.last_date = datetime.utcnow()
 
     if image:
-        # Ici, sauvegardez le fichier d'image comme requis, par exemple dans un dossier statique
+        # Sauvegardez le fichier d'image comme requis, par exemple dans un dossier statique
         image_path = f"/path/to/images/{image.filename}"
         with open(image_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        article.image = image_path  # Assurez-vous que l'article a un champ `image`
+        article.image = image_path
+
+    # Enregistrer la mise à jour dans l'historique après avoir appliqué les modifications
+    history_entry = ArticleHistory(
+        article_id=article.id,
+        previous_instructions  = article.instructions ,  # Utiliser les nouvelles valeurs
+        previous_content = article.content,  # Utiliser les nouvelles valeurs
+        date_modif=datetime.utcnow(),
+        admin_id=current_user.id
+    )
+    db.add(history_entry)
 
     db.commit()
 

@@ -19,6 +19,8 @@ const ArticleGenerator = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [mode, setMode] = useState(articleId ? "edit" : "create");
+  const [history, setHistory] = useState([]);
+  const [selectedVersion, setSelectedVersion] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,8 +36,13 @@ const ArticleGenerator = () => {
           setArticleId(id); // Assurez-vous que cette ligne est nécessaire pour votre logique
           setMode("edit"); // Changez le mode en "edit"
           setShowGenerateButton(false); // Cachez le bouton générer car vous êtes en mode édition
-        } catch (error) {
-          console.error('Error fetching article:', error);
+          // Chargez également l'historique ici
+          const historyResponse = await fetch(`http://127.0.0.1:8000/article_history/${id}`);
+            if (!historyResponse.ok) throw new Error('Failed to fetch history');
+            const historyData = await historyResponse.json();
+            setHistory(historyData);
+          } catch (error) {
+            console.error('Error:', error);
         }
       }
     };
@@ -165,6 +172,33 @@ const ArticleGenerator = () => {
         placeholder="Enter customization instructions..."
         rows="4"
       ></textarea>
+      <br />
+      {mode === "edit" && history.length > 0 && (
+        <div>
+          <label htmlFor="historySelect">Select Previous Version:</label>
+          <select
+            id="historySelect"
+            onChange={(e) => {
+              const selectedHistoryId = e.target.value;
+              const selectedVersion = history.find(h => h.id.toString() === selectedHistoryId);
+              if (selectedVersion) {
+                setSelectedVersion(selectedVersion);
+                // Ici, ajustez les états du formulaire en fonction de la version sélectionnée
+                setArticle(selectedVersion.previous_content);
+                setInstructions(selectedVersion.previous_instructions);
+                // Ajoutez d'autres champs si nécessaire
+              }
+            }}
+          >
+            <option value="">Select a version</option>
+            {history.map((h) => (
+              <option key={h.id} value={h.id}>
+                {new Date(h.date_modif).toLocaleDateString()} - Version {h.id}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <br />
       {showGenerateButton && mode === "create" && (
         <button onClick={generateArticle} disabled={isGenerating}>
