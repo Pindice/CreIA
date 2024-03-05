@@ -370,8 +370,24 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+@app.get("/articles/{article_id}")
+async def get_article(article_id: int, db: Session = Depends(get_db)):
+    article = db.query(Article).filter(Article.id == article_id).first()
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return article
+
 @app.put("/articles/{article_id}")
-def update_article(article_id: int, request: ArticleRequest, db: Session = Depends(get_db), current_user: Admin = Depends(get_current_user)):
+async def update_article(
+    article_id: int,
+    title: str = Form(...),
+    topic: str = Form(...),
+    instructions: str = Form(...),
+    content: str = Form(...),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: Admin = Depends(get_current_user)
+):
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -379,20 +395,35 @@ def update_article(article_id: int, request: ArticleRequest, db: Session = Depen
     # Enregistrer l'état actuel dans l'historique
     history_entry = ArticleHistory(
         article_id=article.id,
-        previous_instructions=article.instructions,  # Utilisation du bon champ
+        previous_instructions=article.instructions,
         previous_content=article.content,
         date_modif=datetime.utcnow(),
-        admin_id=None  # Assurez-vous de définir correctement l'admin ID
+        admin_id=current_user.id  # Utiliser l'ID de l'utilisateur connecté
     )
     db.add(history_entry)
     
     # Mettre à jour l'article avec les nouvelles informations
-    article.instructions = request.instructions  # Mise à jour des instructions
-    article.content = request.content
+    article.title = title  # Assurez-vous que l'article a un champ `title`
+    article.topic = topic
+    article.instructions = instructions
+    article.content = content
     article.last_date = datetime.utcnow()
+
+    if image:
+        # Ici, sauvegardez le fichier d'image comme requis, par exemple dans un dossier statique
+        image_path = f"/path/to/images/{image.filename}"
+        with open(image_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        article.image = image_path  # Assurez-vous que l'article a un champ `image`
+
     db.commit()
 
     return {"message": "Article updated", "article_id": article.id}
+
+@app.get("/article_history/{article_id}")
+def get_article_history(article_id: int, db: Session = Depends(get_db)):
+    history = db.query(ArticleHistory).filter(ArticleHistory.article_id == article_id).all()
+    return history
 
 # @app.post("/chat")
 # async def chatbot_endpoint(request: ChatRequest):

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 
 const ArticleGenerator = () => {
+  let { id } = useParams();
   const [topic, setTopic] = useState('');
   const [instructions, setInstructions] = useState('');
   const [article, setArticle] = useState('');
@@ -17,7 +18,30 @@ const ArticleGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+  const [mode, setMode] = useState(articleId ? "edit" : "create");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchArticleData = async () => {
+      if (id) {  // Si un 'id' est récupéré depuis les paramètres de l'URL
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/articles/${id}`);
+          if (!response.ok) throw new Error('Failed to fetch article data');
+          const data = await response.json();
+          setTopic(data.topic);
+          setInstructions(data.instructions);
+          setArticle(data.content);
+          setArticleId(id); // Assurez-vous que cette ligne est nécessaire pour votre logique
+          setMode("edit"); // Changez le mode en "edit"
+          setShowGenerateButton(false); // Cachez le bouton générer car vous êtes en mode édition
+        } catch (error) {
+          console.error('Error fetching article:', error);
+        }
+      }
+    };
+    fetchArticleData();
+  }, [id]); // L'effet dépend de 'id'
+
 
   const closeModalAndRedirect = () => {
     setShowModal(false); // Fermer le modal
@@ -60,8 +84,13 @@ const ArticleGenerator = () => {
     //   alert("No changes detected. Article not saved."); // Vous pouvez choisir de ne pas sauvegarder ou d'informer l'utilisateur
     //   return;
     // }
+    const url = mode === "create" ? 'http://127.0.0.1:8000/save_article' : `http://127.0.0.1:8000/articles/${articleId}`;
+    const method = mode === "create" ? 'POST' : 'PUT';
+    const authToken = localStorage.getItem('token');
+    const title = topic;
     const formData = new FormData();
     formData.append('article_id', articleId);
+    formData.append('title', title);
     formData.append('topic', topic);
     formData.append('instructions', instructions)
     formData.append('content', article);
@@ -71,32 +100,28 @@ const ArticleGenerator = () => {
     formData.append('last_date', publishDate);
     try {
         // Assurez-vous que 'article' contient le texte généré par l'IA
-        const response = await fetch('http://127.0.0.1:8000/save_article', {
-            method: 'POST',
-            body: formData,
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            // 'Content-Type': 'application/json', // Changez en 'multipart/form-data' si vous envoyez des fichiers
+            'Authorization': `Bearer ${authToken}`, // Ajouter le header d'autorisation
+          },
+          body: formData
         });
+        const responseData = await response.json();
         if (response.ok) {
-          const responseData = await response.json();
           setModalMessage(responseData.message);
-          if (responseData.message.includes("No changes detected")) {
-            // Affichez un message spécifique ou gérez ce cas comme nécessaire
-            alert(responseData.message); // Par exemple
-          } else {
-            closeModalAndRedirect();
-          }
+          closeModalAndRedirect();
         } else {
-          const errorData = await response.json();
-          console.error('Error saving article:', errorData);
-          setModalMessage("Failed to save article: " + JSON.stringify(errorData.errors));
+          console.error('Error saving article:', responseData);
+          setModalMessage("Failed to save article: " + JSON.stringify(responseData));
         }
-        
-        
-    } catch (error) {
+      } catch (error) {
         console.error('Error saving article:', error);
         setModalMessage("Error saving article. Please try again.");
-    }
-    setShowModal(true);
-  };
+      }
+      setShowModal(true);
+    };
 
   const regenerateArticle = async () => {
     setIsGenerating(true); // Indiquer que la génération est en cours
@@ -126,47 +151,53 @@ const ArticleGenerator = () => {
 
   return (
     <div>
-      <h2>Générateur d'Articles</h2>
+      <h2>{mode === "create" ? "Créer un Nouvel Article" : "Modifier l'Article"}</h2>
       <input
         type="text"
         value={topic}
         onChange={(e) => setTopic(e.target.value)}
         placeholder="Enter article topic..."
       />
-      <br></br>
+      <br />
       <textarea
-      value={instructions}
-      onChange={(e) => setInstructions(e.target.value)}
-      placeholder="Enter customization instructions..."
-      rows="4"  // Nombre de lignes dans la zone de texte
+        value={instructions}
+        onChange={(e) => setInstructions(e.target.value)}
+        placeholder="Enter customization instructions..."
+        rows="4"
       ></textarea>
-      <br></br>
-      {showGenerateButton && (
+      <br />
+      {showGenerateButton && mode === "create" && (
         <button onClick={generateArticle} disabled={isGenerating}>
           {isGenerating ? 'Generating...' : 'Generate Article'}
         </button>
       )}
-      <div>
-        {article && <div><h3>Generated Article</h3><CKEditor
-        editor={ClassicEditor}
-        data={article}
-        onChange={(event, editor) => {
-          const data = editor.getData();
-          setArticle(data);
-          }}/>
-      </div>}
-      <br></br>
-      {articleId && (
-        <>
-          <button onClick={regenerateArticle} disabled={isGenerating}>
-            {isGenerating ? 'Regenerating...' : 'Regenerate Article'}
-          </button>
-          <button onClick={() => setShowModal(true)}>Save Article</button>
-        </>
+      {article && (
+        <div>
+          <h3>Generated Article</h3>
+          <CKEditor
+            editor={ClassicEditor}
+            data={article}
+            onChange={(event, editor) => {
+              const data = editor.getData();
+              setArticle(data);
+            }}
+          />
+        </div>
+      )}
+      <br />
+      {articleId && mode === "create" && (
+        <button onClick={regenerateArticle} disabled={isGenerating}>
+          {isGenerating ? 'Regenerating...' : 'Regenerate Article'}
+        </button>
+      )}
+      {article && (
+        <button onClick={() => setShowModal(true)}>
+          {mode === "create" ? "Save Article" : "Update Article"}
+        </button>
       )}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Save Article</Modal.Title>
+          <Modal.Title>{mode === "create" ? "Save Article" : "Update Article"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -185,11 +216,10 @@ const ArticleGenerator = () => {
             Close
           </Button>
           <Button variant="primary" onClick={saveArticle}>
-            Save Article
+            {mode === "create" ? "Save Article" : "Update Article"}
           </Button>
         </Modal.Footer>
       </Modal>
-      </div>
     </div>
   );
 };
