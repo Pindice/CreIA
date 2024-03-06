@@ -11,7 +11,7 @@ const Articles = () => {
   // Fonction pour charger les articles depuis le backend
   const fetchArticles = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/articles');
+      const response = await fetch('http://127.0.0.1:8000/articles?consider_date=false');
       const data = await response.json();
       setArticles(data);
     } catch (error) {

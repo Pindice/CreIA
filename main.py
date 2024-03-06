@@ -183,8 +183,13 @@ async def generate_article_endpoint(request: ArticleRequest, db: Session = Depen
 
 
 @app.get("/articles")
-def get_articles(db: Session = Depends(get_db)):
-    return db.query(Article).all()
+def get_articles(skip: int = 0, limit: int = 100, consider_date: bool = True, db: Session = Depends(get_db)):
+    if consider_date:
+        current_time = datetime.utcnow()
+        return db.query(Article).filter(Article.last_date <= current_time).offset(skip).limit(limit).all()
+    else:
+        return db.query(Article).offset(skip).limit(limit).all()
+
 
 @app.post("/generate_title")
 async def generate_title(content: str):

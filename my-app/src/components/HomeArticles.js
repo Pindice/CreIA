@@ -20,10 +20,6 @@ function HomeArticles() {
   const handleNextPage = () => {
     setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev));
 };
-  
-  
-
-    
 
   const handleClose = () => setShow(false);
   const handleShow = (article) => {
@@ -32,7 +28,7 @@ function HomeArticles() {
   };
 
   useEffect(() => {
-    fetch('http://localhost:8000/articles') // Assurez-vous que l'URL est correcte
+    fetch('http://localhost:8000/articles?consider_date=true') // Assurez-vous que l'URL est correcte
       .then((response) => response.json())
       .then((data) => {
         setArticles(data);
@@ -49,7 +45,7 @@ function HomeArticles() {
 
   return (
     <>
-    <Row xs={1} md={3} className="g-4"> {/* Ajoutez un peu d'espacement entre les cards */}
+    <Row xs={1} sm={1} md={2} lg={3} className="g-4"> {/* Ajoutez un peu d'espacement entre les cards */}
       {currentArticles.map((article, idx) => (
         <Col key={idx}>
           <Card style={{ width: '18rem' }}>
