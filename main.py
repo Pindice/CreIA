@@ -190,7 +190,6 @@ def get_articles(skip: int = 0, limit: int = 100, consider_date: bool = True, db
     else:
         return db.query(Article).offset(skip).limit(limit).all()
 
-
 @app.post("/generate_title")
 async def generate_title(content: str):
     # Utilisez ici votre modèle pour générer un titre à partir du contenu
