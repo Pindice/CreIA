@@ -11,6 +11,7 @@
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Ajoute un peu d'ombre pour le style */
     overflow: hidden; /* Assure que le contenu ne dépasse pas du conteneur */
+    border: 2px solid black; /* Ajoute une bordure noire */
   }
   
   .chatbot-messages {

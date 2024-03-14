@@ -31,7 +31,8 @@ function HomeArticles() {
     fetch('http://localhost:8000/articles?consider_date=true') // Assurez-vous que l'URL est correcte
       .then((response) => response.json())
       .then((data) => {
-        setArticles(data);
+        const sortedArticles = data.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+        setArticles(sortedArticles);
       });
   }, []);
 
@@ -52,6 +53,9 @@ function HomeArticles() {
             <Card.Img variant="top" src={article.image || "placeholder-image-url"} />
             <Card.Body>
               <Card.Title>{article.title}</Card.Title>
+              <Card.Text>
+                <small className="text-muted">Publié le: {new Date(article.last_date).toLocaleDateString()}</small>
+              </Card.Text>
               <Card.Text>
                 {createExcerpt(article.content)}
               </Card.Text>

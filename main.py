@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os, traceback, logging
 from httpx import post
-from sqlalchemy import func, Column, Integer, String, DateTime, ForeignKey, Boolean, create_engine
+from sqlalchemy import func, Column, Integer, String, DateTime, ForeignKey, Boolean, desc, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from typing import Optional
@@ -186,9 +186,10 @@ async def generate_article_endpoint(request: ArticleRequest, db: Session = Depen
 def get_articles(skip: int = 0, limit: int = 100, consider_date: bool = True, db: Session = Depends(get_db)):
     if consider_date:
         current_time = datetime.utcnow()
-        return db.query(Article).filter(Article.last_date <= current_time).offset(skip).limit(limit).all()
+        articles = db.query(Article).filter(Article.last_date <= current_time).order_by(desc(Article.last_date)).offset(skip).limit(limit).all()
     else:
-        return db.query(Article).offset(skip).limit(limit).all()
+        articles = db.query(Article).order_by(desc(Article.last_date)).offset(skip).limit(limit).all()
+    return articles
 
 @app.post("/generate_title")
 async def generate_title(content: str):
@@ -206,7 +207,7 @@ async def upload_image(image: UploadFile = File(...)):
 async def save_article(
     article_id: int = Form(...),  # ID de l'article temporaire à mettre à jour
     topic: str = Form(...), 
-    instructions: str = Form(...),
+    instructions: str = Form(None),
     content: str = Form(...), 
     image: UploadFile = File(None),  # Téléchargement d'image optionnel
     db: Session = Depends(get_db)
@@ -386,7 +387,7 @@ async def update_article(
     article_id: int,
     title: str = Form(...),
     topic: str = Form(...),
-    instructions: str = Form(...),
+    instructions: str = Form(None),
     content: str = Form(...),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
