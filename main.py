@@ -99,12 +99,6 @@ async def chatbot_endpoint(request: ChatRequest):
     try:
         messages = [ChatMessage(role="user", content=f"Réponds moi en français à {request.user_message}.")]
         chat_response = client.chat(model="mistral-small", messages=messages)
-
-        # Imprimer les informations sur les tokens dans le backend
-        print("Tokens utilisés pour la prompt:", chat_response.usage.prompt_tokens)
-        print("Total de tokens utilisés:", chat_response.usage.total_tokens)
-        print("Tokens utilisés pour la complétion:", chat_response.usage.completion_tokens)
-
         # Renvoyer uniquement le message de réponse au frontend
         return {'messageResponse': chat_response.choices[0].message}
 
