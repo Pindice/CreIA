@@ -130,7 +130,7 @@ async def generate_article_endpoint(request: ArticleRequest, db: Session = Depen
     try:
         # Préparation du prompt pour la génération de l'article
         messages = [
-            ChatMessage(role="user", content=f"Ecrit moi un article en HTML détaillé en français sur {request.topic} en suivant ces instructions : {request.instructions}")
+            ChatMessage(role="user", content=f"Ecrit moi un article en HTML respectant les normes W3C, détaillé en français sur {request.topic} en suivant ces instructions : {request.instructions}")
             # ChatMessage(role="user", content=f"Write a detailed article about {request.topic}.")
         ]
 
@@ -138,13 +138,8 @@ async def generate_article_endpoint(request: ArticleRequest, db: Session = Depen
             model="mistral-tiny",  # Remplacez par le modèle de votre choix
             messages=messages,
             # temperature=0.7,  # Ajustez selon le niveau de créativité désiré
-            max_tokens=300  # Ajustez selon la longueur d'article souhaitée
+            max_tokens=1000  # Ajustez selon la longueur d'article souhaitée
         )
-        
-        # Imprimer les informations sur les tokens dans le backend
-        print("Tokens utilisés pour la prompt:", chat_response.usage.prompt_tokens)
-        print("Total de tokens utilisés:", chat_response.usage.total_tokens)
-        print("Tokens utilisés pour la complétion:", chat_response.usage.completion_tokens)
 
         # Renvoyer l'article généré au frontend
         generated_article = chat_response.choices[0].message.content
