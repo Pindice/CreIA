@@ -179,19 +179,26 @@ const ArticleGenerator = () => {
   return (
     <div>
       <h2>{mode === "create" ? "Créer un Nouvel Article" : "Modifier l'Article"}</h2>
-      <input
-        type="text"
-        value={topic}
-        onChange={(e) => setTopic(e.target.value)}
-        placeholder="Enter article topic..."
-      />
-      <br />
-      <textarea
-        value={instructions}
-        onChange={(e) => setInstructions(e.target.value)}
-        placeholder="Enter customization instructions..."
-        rows="4"
-      ></textarea>
+      <Form>
+        <Form.Group className="mb-3">
+          <Form.Label>Sujet de l'article</Form.Label>
+          <Form.Control
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="Entrez le sujet de l'article..."
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Instructions de personnalisation</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={3}
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            placeholder="Entrez les instructions de personnalisation..."
+          />
+        </Form.Group>
       <br />
       {mode === "edit" && history.length > 0 && (
         <div>
@@ -221,10 +228,10 @@ const ArticleGenerator = () => {
       )}
       <br />
       {showGenerateButton && mode === "create" && (
-        <button onClick={generateArticle} disabled={isGenerating}>
-          {isGenerating ? 'Generating...' : 'Generate Article'}
-        </button>
-      )}
+          <Button onClick={generateArticle} disabled={isGenerating} variant="primary">
+            {isGenerating ? 'Génération...' : 'Générer Article'}
+          </Button>
+        )}
       {article && (
         <div>
           <h3>Generated Article</h3>
@@ -242,14 +249,14 @@ const ArticleGenerator = () => {
       )}
       <br />
       {articleId && mode === "create" && (
-        <button onClick={regenerateArticle} disabled={isGenerating}>
+        <Button onClick={regenerateArticle} disabled={isGenerating} variant="primary">
           {isGenerating ? 'Regenerating...' : 'Regenerate Article'}
-        </button>
+        </Button>
       )}
       {article && (
-        <button onClick={() => setShowModal(true)}>
+        <Button onClick={() => setShowModal(true)}>
           {mode === "create" ? "Save Article" : "Update Article"}
-        </button>
+        </Button>
       )}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
@@ -276,6 +283,7 @@ const ArticleGenerator = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      </Form>
     </div>
   );
 };
