@@ -125,7 +125,7 @@ async def generate_article_endpoint(request: ArticleRequest, db: Session = Depen
     try:
         # Préparation du prompt pour la génération de l'article
         messages = [
-            ChatMessage(role="user", content=f"Ecrit moi un article en HTML respectant les normes W3C, détaillé en français sur {request.topic} en suivant ces instructions : {request.instructions}")
+            ChatMessage(role="user", content=f"Rédige moi un article détaillé en lien avec la création d'entreprise en France, en HTML respectant les normes W3C et en français sur {request.topic} en suivant ces instructions : {request.instructions}")
             # ChatMessage(role="user", content=f"Write a detailed article about {request.topic}.")
         ]
 
@@ -262,6 +262,7 @@ async def save_article(
 
 
 class RegenerateArticleRequest(BaseModel):
+    topic: Optional[str] = None
     instructions: str
 
 @router.post("/regenerate_article/{article_id}")
@@ -273,7 +274,7 @@ async def regenerate_article(article_id: int, request: RegenerateArticleRequest,
     # Utiliser la logique de génération d'article avec les nouvelles instructions
     # Similaire à l'endpoint /generate_article mais avec request.instructions
     messages = [
-        ChatMessage(role="user", content=f"Ecrit moi un article en HTML détaillé en français sur {article.topic} en suivant ces instructions : {request.instructions}")
+        ChatMessage(role="user", content=f"Rédige moi un article détaillé en lien avec la création d'entreprise en France, en HTML respectant les normes W3C et en français sur {request.topic} en suivant ces instructions : {request.instructions}")
     ]
 
     chat_response = client.chat(
@@ -292,13 +293,12 @@ async def regenerate_article(article_id: int, request: RegenerateArticleRequest,
         date_modif=datetime.utcnow(),
         admin_id=None  # Assurez-vous d'identifier correctement l'admin
     )
+    if request.topic:
+        article.topic = request.topic
+    article.instructions = request.instructions
+    article.content = new_content
     db.add(new_history)
     db.commit()
-
-    # (Optionnel) Mettre à jour l'article dans la base de données
-    # article.content = new_content
-    # article.instructions = new_instructions
-    # db.commit()
 
     return {"message": "Article regenerated and history entry created", "new_content": new_content}
 
@@ -425,3 +425,5 @@ def get_article_history(article_id: int, db: Session = Depends(get_db)):
 
 # Configuration pour servir les fichiers statiques
 app.mount("/images", StaticFiles(directory="images"), name="images")
+
+app.include_router(router)

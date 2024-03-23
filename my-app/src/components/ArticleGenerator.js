@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form } from 'react-bootstrap';
+import { Button, Modal, Form, Container, Row, Col } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
@@ -158,7 +158,8 @@ const ArticleGenerator = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          instructions: instructions, // Utiliser l'état local 'instructions' pour les nouvelles instructions
+          topic,
+          instructions, // Utiliser l'état local 'instructions' pour les nouvelles instructions
         }),
       });
   
@@ -227,14 +228,16 @@ const ArticleGenerator = () => {
       {article && (
         <div>
           <h3>Generated Article</h3>
-          <CKEditor
-            editor={ClassicEditor}
-            data={article}
-            onChange={(event, editor) => {
-              const data = editor.getData();
-              setArticle(data);
-            }}
-          />
+          <div style={{ height: '500px', overflow: 'auto', position: 'relative' }}>
+            <CKEditor
+              editor={ClassicEditor}
+              data={article}
+              onChange={(event, editor) => {
+                const data = editor.getData();
+                setArticle(data);
+              }}
+            />
+          </div>
         </div>
       )}
       <br />
