@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import { useNavigate } from 'react-router-dom';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
+
 
 
 const Articles = () => {
   const [articles, setArticles] = useState([]);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [articleToDelete, setArticleToDelete] = useState(null);
   const navigate = useNavigate();
 
   // Fonction pour charger les articles depuis le backend
@@ -19,41 +23,25 @@ const Articles = () => {
     }
   };
 
-  const updateArticleContent = async (articleId, newContent) => {
-    // Mettre à jour l'état local
-    const updatedArticles = articles.map((article) => {
-      if (article.id === articleId) {
-        return { ...article, content: newContent };
+  // Fonction pour supprimer un article
+  const deleteArticle = async () => {
+    if (articleToDelete) {
+      try {
+        await fetch(`http://127.0.0.1:8000/articles/${articleToDelete}`, {
+          method: 'DELETE',
+        });
+        setIsConfirmModalOpen(false); // Fermer le modal de confirmation
+        setIsSuccessModalOpen(true); // Ouvrir le modal de succès
+        fetchArticles(); // Recharger les articles après la suppression
+      } catch (error) {
+        console.error('Error deleting article:', error);
       }
-      return article;
-    });
-    setArticles(updatedArticles);
-  
-    // Envoie la mise à jour à l'API
-    try {
-      await fetch(`http://127.0.0.1:8000/articles/${articleId}`, {
-        method: 'PUT', // Assurez-vous que votre API backend supporte cette méthode pour la mise à jour
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: newContent }),
-      });
-    } catch (error) {
-      console.error('Error updating article:', error);
     }
   };
 
-  // Fonction pour supprimer un article
-  const deleteArticle = async (articleId) => {
-    try {
-      await fetch(`http://127.0.0.1:8000/articles/${articleId}`, {
-        method: 'DELETE',
-      });
-      // Recharger les articles après la suppression
-      fetchArticles();
-    } catch (error) {
-      console.error('Error deleting article:', error);
-    }
+  const askDeleteArticle = (articleId) => {
+    setArticleToDelete(articleId);
+    setIsConfirmModalOpen(true);
   };
 
   // Charger les articles au montage du composant
@@ -69,21 +57,53 @@ const Articles = () => {
           {articles.map((article) => (
             <li key={article.id}>
               <h3>{article.topic}</h3>
-              <CKEditor
-              editor={ClassicEditor}
-              data={article.content} // Assurez-vous que cela est correctement lié à chaque article spécifique
-              onChange={(event, editor) => {
-                const data = editor.getData();
-                updateArticleContent(article.id, data);
-              }}/>
-              <button style={{ marginBottom: '20px' }} onClick={() => navigate(`/article-generator/${article.id}`)}>Modifier</button>
-              <button style={{ marginBottom: '20px' }} onClick={() => deleteArticle(article.id)}>Supprimer</button>
+              <div
+                dangerouslySetInnerHTML={{ __html: article.content }}
+                style={{
+                  height: '200px', 
+                  overflowY: 'scroll', 
+                  border: '1px solid #ccc',
+                  padding: '10px', 
+                  marginBottom: '10px'
+                }}
+              ></div>
+              <button style={{ marginRight: '10px' }} onClick={() => navigate(`/article-generator/${article.id}`)}>Modifier</button>
+              <button onClick={() => askDeleteArticle(article.id)}>Supprimer</button>
             </li>
           ))}
         </ul>
       ) : (
         <p>Aucun article trouvé.</p>
       )}
+
+      {/* Modal de confirmation */}
+      <Modal show={isConfirmModalOpen} onHide={() => setIsConfirmModalOpen(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmation de suppression</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Êtes-vous sûr de vouloir supprimer cet article ?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setIsConfirmModalOpen(false)}>
+            Non
+          </Button>
+          <Button variant="primary" onClick={deleteArticle}>
+            Oui
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal de succès */}
+      <Modal show={isSuccessModalOpen} onHide={() => setIsSuccessModalOpen(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Suppression réussie</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>L'article a été supprimé avec succès.</Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setIsSuccessModalOpen(false)}>
+            OK
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
