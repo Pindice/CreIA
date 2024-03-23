@@ -23,7 +23,7 @@ function Login({ setIsLoggedIn }) {
             localStorage.setItem('token', access_token); // Stocker le token dans le stockage local
             localStorage.setItem('isLoggedIn', 'true'); // Stocker explicitement le statut de connexion
             setIsLoggedIn(true);
-            navigate('/article-generator');
+            navigate('/');
         } catch (error) {
             alert('Identifiants incorrects ou problème de connexion');
             console.error(error);

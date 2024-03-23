@@ -27,22 +27,26 @@ function App() {
   return (
     <>
       <Router>
-        <Navbar bg="dark" variant="dark" expand="lg" sticky="top">
-          <Container>
-            <Navbar.Brand href="/">Mon Blog</Navbar.Brand>
-            <Nav className="me-auto">
-              <Link to="/article-generator" className="nav-link">Générateur d'Articles</Link>
-              <Link to="/articles" className="nav-link">Articles</Link>
-            </Nav>
-            <Nav className="ms-auto">
-              {!isLoggedIn ? (
-                <Link to="/login" className="nav-link">Login</Link>
-              ) : (
-                <Nav.Link as="span" onClick={logout} style={{cursor: 'pointer'}}>Déconnexion</Nav.Link>
-              )}
-            </Nav>
-          </Container>
-        </Navbar>
+      <Navbar bg="dark" variant="dark" expand="lg" sticky="top">
+        <Container>
+          <Navbar.Brand href="/">Mon Blog</Navbar.Brand>
+          <Nav className="me-auto">
+            {isLoggedIn && (
+              <>
+                <Link to="/article-generator" className="nav-link">Générateur d'Articles</Link>
+                <Link to="/articles" className="nav-link">Articles</Link>
+              </>
+            )}
+          </Nav>
+          <Nav className="ms-auto">
+            {!isLoggedIn ? (
+              <Link to="/login" className="nav-link">Login</Link>
+            ) : (
+              <Nav.Link as="span" onClick={logout} style={{cursor: 'pointer'}}>Déconnexion</Nav.Link>
+            )}
+          </Nav>
+        </Container>
+      </Navbar>
         <Container style={{ marginTop: '20px' }}>
           <Routes>
             <Route path="/article-generator" element={isLoggedIn ? <ArticleGenerator /> : <Login setIsLoggedIn={setIsLoggedIn}/>} />
