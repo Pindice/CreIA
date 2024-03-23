@@ -25,7 +25,15 @@ const ArticleGenerator = () => {
 
   useEffect(() => {
     const fetchArticleData = async () => {
-      if (id) {  // Si un 'id' est récupéré depuis les paramètres de l'URL
+      if (!id) {
+        setTopic('');
+        setInstructions('');
+        setArticle('');
+        setArticleId(null);
+        setMode("create");
+        setShowGenerateButton(true);
+        // Réinitialisez ici tout autre état nécessaire
+      } else {  // Si un 'id' est récupéré depuis les paramètres de l'URL
         try {
           const response = await fetch(`http://127.0.0.1:8000/articles/${id}`);
           if (!response.ok) throw new Error('Failed to fetch article data');
@@ -51,8 +59,19 @@ const ArticleGenerator = () => {
 
 
   const closeModalAndRedirect = () => {
-    setShowModal(false); // Fermer le modal
-    navigate('/articles'); // Rediriger vers l'URL des articles
+    setShowModal(false);
+    navigate('/articles');
+    // Ajoutez ici la réinitialisation des états à leurs valeurs par défaut
+    resetState();
+  };
+
+  const resetState = () => {
+    setTopic('');
+    setInstructions('');
+    setArticle('');
+    setArticleId(null);
+    setShowGenerateButton(true);
+    // Réinitialisez ici tout autre état nécessaire
   };
 
   const handleImageChange = (e) => {
