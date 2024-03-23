@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, status, UploadFile, APIRouter, File,
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 from pydantic import BaseModel
@@ -188,9 +189,12 @@ async def generate_title(content: str):
 
 @app.post("/upload_image")
 async def upload_image(image: UploadFile = File(...)):
-    # Sauvegardez l'image et renvoyez l'URL ou le chemin de l'image
-    image_location = "/path/to/image"
-    return {"image_path": image_location}
+    folder = 'images/'
+    file_location = f"{folder}{image.filename}"
+    os.makedirs(folder, exist_ok=True)
+    with open(file_location, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+    return {"image_path": file_location}    
 
 @app.post("/save_article")
 async def save_article(
@@ -213,7 +217,7 @@ async def save_article(
 
         if image:
             # Gestion de l'image si fournie
-            image_path = f"/path/to/images/{image.filename}"
+            image_path = os.path.join("images", image.filename)
             with open(image_path, "wb") as buffer:
                 shutil.copyfileobj(image.file, buffer)
             temp_article.image = image_path
@@ -244,7 +248,7 @@ async def save_article(
 
         if image:
             # Gestion de l'image pour le nouvel article
-            image_path = f"/path/to/images/{image.filename}"
+            image_path = os.path.join("images", image.filename)
             with open(image_path, "wb") as buffer:
                 shutil.copyfileobj(image.file, buffer)
             new_article.image = image_path
@@ -395,7 +399,7 @@ async def update_article(
 
     if image:
         # Sauvegardez le fichier d'image comme requis, par exemple dans un dossier statique
-        image_path = f"/path/to/images/{image.filename}"
+        image_path = os.path.join("images", image.filename)
         with open(image_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
         article.image = image_path
@@ -419,26 +423,5 @@ def get_article_history(article_id: int, db: Session = Depends(get_db)):
     history = db.query(ArticleHistory).filter(ArticleHistory.article_id == article_id).all()
     return history
 
-# @app.post("/chat")
-# async def chatbot_endpoint(request: ChatRequest):
-#     logger.info(f"API Key: {api_key}")
-#     try:
-#         # Le message de l'utilisateur doit être une chaîne de caractères, pas besoin de l'encoder en bytes
-#         response = post(
-#             "https://api.mistral.ai/v1/chat/completions",
-#             headers={
-#                 "Authorization": f"Bearer {api_key}",
-#                 "Content-Type": "application/json",
-#             },
-#             json={
-#                 "model": "mistral-tiny",
-#                 "messages": [{"role": "user", "content": request.user_message}],
-#             },
-#         )
-#         print(api_key)
-#         print(request.json())
-#         response.raise_for_status()
-#         return response.json()
-#     except Exception as e:
-#         traceback.print_exc()
-#         raise HTTPException(status_code=500, detail=str(e))
+# Configuration pour servir les fichiers statiques
+app.mount("/images", StaticFiles(directory="images"), name="images")

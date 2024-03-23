@@ -50,7 +50,7 @@ function HomeArticles() {
       {currentArticles.map((article, idx) => (
         <Col key={idx}>
           <Card style={{ width: '18rem' }}>
-            <Card.Img variant="top" src={article.image || "placeholder-image-url"} />
+            <Card.Img variant="top" src={article.image ? `http://localhost:8000/${article.image.replace("\\", "/")}` : "placeholder-image-url"} />
             <Card.Body>
               <Card.Title>{article.title}</Card.Title>
               <Card.Text>
