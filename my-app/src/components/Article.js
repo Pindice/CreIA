@@ -15,6 +15,7 @@ const Articles = () => {
   // Fonction pour charger les articles depuis le backend
   const fetchArticles = async () => {
     try {
+      // Omettre is_temporary pour récupérer tous les articles, temporaires ou non
       const response = await fetch('http://127.0.0.1:8000/articles?consider_date=false');
       const data = await response.json();
       setArticles(data);
@@ -22,6 +23,7 @@ const Articles = () => {
       console.error('Error fetching articles:', error);
     }
   };
+  
 
   // Fonction pour supprimer un article
   const deleteArticle = async () => {

@@ -95,17 +95,17 @@ class ChatRequest(BaseModel):
 def read_root():
     return {"Hello": "World"}
 
-@app.post("/chat")
-async def chatbot_endpoint(request: ChatRequest):
-    try:
-        messages = [ChatMessage(role="user", content=f"Réponds moi en français à {request.user_message}.")]
-        chat_response = client.chat(model="mistral-small", messages=messages)
-        # Renvoyer uniquement le message de réponse au frontend
-        return {'messageResponse': chat_response.choices[0].message}
+# @app.post("/chat")
+# async def chatbot_endpoint(request: ChatRequest):
+#     try:
+#         messages = [ChatMessage(role="user", content=f"Réponds moi en français à {request.user_message}.")]
+#         chat_response = client.chat(model="mistral-small", messages=messages)
+#         # Renvoyer uniquement le message de réponse au frontend
+#         return {'messageResponse': chat_response.choices[0].message}
 
-    except Exception as e:
-        logger.error(f"Une erreur est survenue: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+#     except Exception as e:
+#         logger.error(f"Une erreur est survenue: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
 
 class ArticleRequest(BaseModel):
     topic: str
@@ -173,12 +173,14 @@ async def generate_article_endpoint(request: ArticleRequest, db: Session = Depen
 
 
 @app.get("/articles")
-def get_articles(skip: int = 0, limit: int = 100, consider_date: bool = True, db: Session = Depends(get_db)):
+def get_articles(skip: int = 0, limit: int = 100, consider_date: bool = True, is_temporary: Optional[bool] = None, db: Session = Depends(get_db)):
+    query = db.query(Article)
+    if is_temporary is not None:
+        query = query.filter(Article.is_temporary == is_temporary)
     if consider_date:
         current_time = datetime.utcnow()
-        articles = db.query(Article).filter(Article.last_date <= current_time).order_by(desc(Article.last_date)).offset(skip).limit(limit).all()
-    else:
-        articles = db.query(Article).order_by(desc(Article.last_date)).offset(skip).limit(limit).all()
+        query = query.filter(Article.last_date <= current_time)
+    articles = query.order_by(desc(Article.last_date)).offset(skip).limit(limit).all()
     return articles
 
 @app.post("/generate_title")

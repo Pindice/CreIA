@@ -28,13 +28,14 @@ function HomeArticles() {
   };
 
   useEffect(() => {
-    fetch('http://localhost:8000/articles?consider_date=true') // Assurez-vous que l'URL est correcte
+    fetch('http://localhost:8000/articles?is_temporary=false&consider_date=true')
       .then((response) => response.json())
       .then((data) => {
         const sortedArticles = data.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
         setArticles(sortedArticles);
       });
   }, []);
+
 
    // Fonction pour créer un extrait du contenu
    const createExcerpt = (htmlContent) => {

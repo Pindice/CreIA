@@ -249,7 +249,7 @@ const ArticleGenerator = () => {
       )}
       <br />
       {articleId && mode === "create" && (
-        <Button onClick={regenerateArticle} disabled={isGenerating} variant="primary">
+        <Button onClick={regenerateArticle} disabled={isGenerating} variant="primary" className="me-2">
           {isGenerating ? 'Regenerating...' : 'Regenerate Article'}
         </Button>
       )}

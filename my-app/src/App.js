@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Chatbot from './components/Chatbot';
+// import Chatbot from './components/Chatbot';
 import ArticleGenerator from './components/ArticleGenerator';
 import Articles from './components/Article';
 import Login from './components/Login';
@@ -57,10 +57,10 @@ function App() {
           </Routes>
         </Container>
       </Router>
-      <div style={{ position: 'fixed', bottom: 10, right: 10, cursor: 'pointer', zIndex: 1050 }}>
+      {/* <div style={{ position: 'fixed', bottom: 10, right: 10, cursor: 'pointer', zIndex: 1050 }}>
         <ChatIcon onClick={() => setShowChatbot(!showChatbot)} />
       </div>
-      {showChatbot && <Chatbot />} {/* Ceci place le Chatbot sur toutes les pages, en bas à droite */}
+      {showChatbot && <Chatbot />} Ceci place le Chatbot sur toutes les pages, en bas à droite */}
     </>
   );
 }
