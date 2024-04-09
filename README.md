@@ -1,4 +1,4 @@
-# Nom de l'Application
+# CreIA
 
 **Une plateforme web dédiée à l'accompagnement des entrepreneurs, propulsée par l'intelligence artificielle.**
 
@@ -30,7 +30,3 @@ Cette application offre une solution innovante pour soutenir les créateurs d'en
 ## Contribution
 
 Les contributions sont les bienvenues. Veuillez consulter le document de contribution avant de soumettre des issues ou des pull requests.
-
-## Licence
-
-Le projet est sous licence [INSÉRER LE TYPE DE LICENCE]. Voir le fichier LICENSE pour les détails.
